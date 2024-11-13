@@ -11,13 +11,13 @@ RUN apt-get update && \
     apt-get install -y php7.4 php7.4-cli php7.4-fpm php7.4-mysql libapache2-mod-php7.4 git && \
     mkdir /var/run/sshd
 
-RUN for student in $STUDENTS; do \
-        useradd -m -d /home/$student $student && \
-        echo "$student:$student" | chpasswd && \
-        mkdir -p /var/www/html/$student && \
-        chown $student:$student /var/www/html/$student && \
-        chmod 755 /var/www/html/$student && \
-        ln -s /var/www/html/$student /home/$student/html; \
+    RUN for user in $STUDENTS $TEACHERS; do \
+        useradd -m -d /home/$user $user && \
+        echo "$user:$user" | chpasswd && \
+        mkdir -p /var/www/html/$user && \
+        chown $user:$user /var/www/html/$user && \
+        chmod 755 /var/www/html/$user && \
+        ln -s /var/www/html/$user /home/$user/html; \
     done
 
 RUN for teacher in $TEACHERS; do \

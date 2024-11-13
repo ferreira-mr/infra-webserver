@@ -20,12 +20,16 @@ services:
       - network
     depends_on:
       - mariadb
+      - phpmyadmin
 
   mariadb:
     image: mariadb:latest
     container_name: mariadb
     environment:
       MYSQL_ROOT_PASSWORD: root
+      # MYSQL_DATABASE: mydatabase
+      # MYSQL_USER: myuser
+      # MYSQL_PASSWORD: mypassword
     volumes:
       - database:/var/lib/mysql
       - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
@@ -33,6 +37,21 @@ services:
       - network
     ports:
       - "3306:3306"
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: phpmyadmin
+    environment:
+      PMA_HOST: mariadb  # Nome do serviço do contêiner MariaDB
+      PMA_PORT: 3306
+      MYSQL_ROOT_PASSWORD: root
+      PMA_ARBITRARY: 1   # Permite conexão a hosts arbitrários
+    ports:
+      - "8080:80"
+    networks:
+      - network
+    depends_on:
+      - mariadb
 
 volumes:
   html:
