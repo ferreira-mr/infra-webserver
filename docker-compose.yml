@@ -1,0 +1,44 @@
+services:
+  apache:
+    build:
+      context: .
+      dockerfile: dockerfiles/Dockerfile.apache
+      args:
+        STUDENTS: ${STUDENTS}
+        TEACHERS: ${TEACHERS}
+    environment:
+      - STUDENTS=${STUDENTS}
+      - TEACHERS=${TEACHERS}
+    container_name: apache
+    volumes:
+      - html:/var/www/html
+      - home:/home
+    ports:
+      - "80:80"
+      - "22:22"
+    networks:
+      - network
+    depends_on:
+      - mariadb
+
+  mariadb:
+    image: mariadb:latest
+    container_name: mariadb
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - database:/var/lib/mysql
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - network
+    ports:
+      - "3306:3306"
+
+volumes:
+  html:
+  database:
+  home:
+
+networks:
+  network:
+    driver: bridge

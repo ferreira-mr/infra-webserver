@@ -1,0 +1,35 @@
+FROM debian:latest
+
+ARG STUDENTS
+ARG TEACHERS
+
+RUN apt-get update && \
+    apt-get install -y apache2 sudo openssh-server \
+    curl gnupg2 ca-certificates lsb-release apt-transport-https mariadb-client && \
+    curl -sSL https://packages.sury.org/php/README.txt | bash - && \
+    apt-get update && \
+    apt-get install -y php7.4 php7.4-cli php7.4-fpm php7.4-mysql libapache2-mod-php7.4 git && \
+    mkdir /var/run/sshd
+
+RUN for student in $STUDENTS; do \
+        useradd -m -d /home/$student $student && \
+        echo "$student:$student" | chpasswd && \
+        mkdir -p /var/www/html/$student && \
+        chown $student:$student /var/www/html/$student && \
+        chmod 755 /var/www/html/$student && \
+        ln -s /var/www/html/$student /home/$student/html; \
+    done
+
+RUN for teacher in $TEACHERS; do \
+        usermod -aG sudo $teacher; \
+    done
+
+RUN a2enmod php7.4
+
+RUN rm /var/www/html/index.html
+
+COPY index.php /var/www/html/index.php
+
+EXPOSE 80 22
+
+CMD service ssh start && apache2ctl -D FOREGROUND
