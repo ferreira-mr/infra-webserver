@@ -4,11 +4,11 @@ ARG STUDENTS
 ARG TEACHERS
 
 RUN apt-get update && \
-    apt-get install -y apache2 sudo openssh-server \
-    curl gnupg2 ca-certificates lsb-release apt-transport-https mariadb-client && \
+    apt-get install -y apache2 sudo openssh-server curl gnupg2 ca-certificates \
+    lsb-release apt-transport-https mariadb-client zsh wget git nano vim && \
     curl -sSL https://packages.sury.org/php/README.txt | bash - && \
     apt-get update && \
-    apt-get install -y php php-cli php-fpm php-mysql libapache2-mod-php git && \
+    apt-get install -y php php-cli php-fpm php-mysql libapache2-mod-php && \
     apt-get clean && rm -rf /var/lib/apt/lists/* && \
     mkdir /var/run/sshd && \
     a2enmod proxy_fcgi setenvif && \
@@ -19,16 +19,29 @@ COPY index_root.php /var/www/html/index.php
 COPY index_student.php /index_student.php
 
 RUN for user in $STUDENTS $TEACHERS; do \
-        useradd -m -d /home/$user $user && \
+        useradd -m -d /home/$user -s /usr/bin/zsh $user && \
         echo "$user:$user" | chpasswd && \
         mkdir -p /var/www/html/$user && \
         chown $user:$user /var/www/html/$user && \
         chmod 755 /var/www/html/$user && \
         ln -s /var/www/html/$user /home/$user/html && \
-        cp /index_student.php /var/www/html/$user/index.php; \
+        cp /index_student.php /var/www/html/$user/index.php && \
+        su - $user -c "sh -c 'wget https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh -O - | sh || true'" && \
+        su - $user -c "git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting" && \
+        su - $user -c "git clone https://github.com/zsh-users/zsh-autosuggestions.git ~/.oh-my-zsh/custom/plugins/zsh-autosuggestions" && \
+        su - $user -c "sed -i 's/plugins=(git)/plugins=(git zsh-syntax-highlighting zsh-autosuggestions)/g' ~/.zshrc"; \
     done && \
     for teacher in $TEACHERS; do \
         usermod -aG sudo $teacher; \
+    done && \
+    sh -c "wget https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh -O - | sh || true" && \
+    git clone https://github.com/zsh-users/zsh-syntax-highlighting.git /root/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting && \
+    git clone https://github.com/zsh-users/zsh-autosuggestions.git /root/.oh-my-zsh/custom/plugins/zsh-autosuggestions && \
+    sed -i 's/plugins=(git)/plugins=(git zsh-syntax-highlighting zsh-autosuggestions)/g' /root/.zshrc
+
+RUN sed -i 's/ZSH_THEME=".*"/ZSH_THEME="robbyrussell"/g' /root/.zshrc && \
+    for user in $STUDENTS $TEACHERS; do \
+        su - $user -c "sed -i 's/ZSH_THEME=\".*\"/ZSH_THEME=\"robbyrussell\"/g' ~/.zshrc"; \
     done
 
 EXPOSE 80 22
