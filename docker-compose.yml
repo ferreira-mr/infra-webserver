@@ -42,10 +42,10 @@ services:
     image: phpmyadmin/phpmyadmin:latest
     container_name: phpmyadmin
     environment:
-      PMA_HOST: mariadb  # Nome do serviço do contêiner MariaDB
+      PMA_HOST: mariadb
       PMA_PORT: 3306
       MYSQL_ROOT_PASSWORD: root
-      PMA_ARBITRARY: 1   # Permite conexão a hosts arbitrários
+      PMA_ARBITRARY: 1
     ports:
       - "8080:80"
     networks:

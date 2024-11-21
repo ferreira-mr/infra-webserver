@@ -8,28 +8,29 @@ RUN apt-get update && \
     curl gnupg2 ca-certificates lsb-release apt-transport-https mariadb-client && \
     curl -sSL https://packages.sury.org/php/README.txt | bash - && \
     apt-get update && \
-    apt-get install -y php7.4 php7.4-cli php7.4-fpm php7.4-mysql libapache2-mod-php7.4 git && \
-    mkdir /var/run/sshd
+    apt-get install -y php php-cli php-fpm php-mysql libapache2-mod-php git && \
+    apt-get clean && rm -rf /var/lib/apt/lists/* && \
+    mkdir /var/run/sshd && \
+    a2enmod proxy_fcgi setenvif && \
+    a2enconf php8.3-fpm && \
+    rm /var/www/html/index.html
 
-    RUN for user in $STUDENTS $TEACHERS; do \
+COPY index_root.php /var/www/html/index.php
+COPY index_student.php /index_student.php
+
+RUN for user in $STUDENTS $TEACHERS; do \
         useradd -m -d /home/$user $user && \
         echo "$user:$user" | chpasswd && \
         mkdir -p /var/www/html/$user && \
         chown $user:$user /var/www/html/$user && \
         chmod 755 /var/www/html/$user && \
-        ln -s /var/www/html/$user /home/$user/html; \
-    done
-
-RUN for teacher in $TEACHERS; do \
+        ln -s /var/www/html/$user /home/$user/html && \
+        cp /index_student.php /var/www/html/$user/index.php; \
+    done && \
+    for teacher in $TEACHERS; do \
         usermod -aG sudo $teacher; \
     done
 
-RUN a2enmod php7.4
-
-RUN rm /var/www/html/index.html
-
-COPY index.php /var/www/html/index.php
-
 EXPOSE 80 22
 
-CMD service ssh start && apache2ctl -D FOREGROUND
+CMD service ssh start && service php8.3-fpm start && apache2ctl -D FOREGROUND
